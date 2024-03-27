@@ -17,8 +17,6 @@ isWord db 1               ; Flag to indicate if current input is part of a word
 
 ;---------------------------------------------------------------------------
 
-
-
 ;------------------------ CODE SECTION: --------------------------------
 .code
 main proc
