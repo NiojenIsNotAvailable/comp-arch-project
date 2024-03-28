@@ -154,6 +154,60 @@ trnInNum endp
 
 ;------------------------ CONVERT NUMBER TO CHARACTERS ------------------------
 
+
+turnInChar proc
+    pop dx                      ; Restore DX
+    pop bx                      ; Get index
+    shl bx, 1                   ; Multiply index by 2 to get the offset in the values array
+    mov ax, [values+bx]        ; Get the number from the values array
+    cmp ax, 10000               ; Check if the number is negative
+    jc positive                 ; Jump if it's positive
+        neg ax                  ; If negative, negate the number
+positive:
+    shr bx, 1                   ; Divide index by 2 to get the real index
+    push bx                     ; Save the real index
+    push dx                     ; Save DX (used later)
+    mov cx, 15                  ; Set character index to 15 (start from the end)
+makeChar:
+    mov dx, 0                   ; Clear DX
+    mov bx, 10                  ; Set BX to 10 (for division)
+    div bx                      ; Divide AX by BX, remainder in DX, quotient in AX
+    mov si, offset keyTemp     ; Get the address of keyTemp
+    add si, cx                  ; Calculate the location to write the character
+    add dx, '0'                 ; Convert remainder to ASCII character
+    mov [si], dl                ; Store the character
+    cmp ax, 0                   ; Check if quotient is zero
+    jnz contSetNumb             ; If not zero, continue setting numbers
+        mov bx, 16              ; Set BX to 16 (array length)
+        mov numberInd, bx       ; Store the length of the number in numberInd
+        sub numberInd, cx       ; Calculate the length of the number
+        jmp reverse_number      ; Jump to reverse the number
+contSetNumb:
+    dec cx                      ; Decrement character index
+    cmp cx, -1                  ; Check if all characters are set
+    jne makeChar                ; If not, continue setting characters
+; Number has been converted to characters
+
+; Reverse the number to get correct order
+reverse_number:
+    mov cx, 16                  ; Set CX to 16 (array length)
+    sub cx, numberInd           ; Calculate the number of characters to reverse
+    mov dx, 0                   ; Clear DX (used for offset)
+reverse:
+    mov si, offset keyTemp     ; Get the address of keyTemp
+    add si, cx                  ; Calculate the position of the character to reverse
+    mov di, offset number       ; Get the address of the number array
+    add di, dx                  ; Calculate the position to store the character
+    mov al, [si]                ; Get the character
+    mov [di], al                ; Store the character in reverse order
+    inc dx                      ; Increment offset
+    inc cx                      ; Increment character index
+    cmp cx, 16                  ; Check if all characters have been reversed
+    jnz reverse                 ; If not, continue reversing
+ret                             ; Return from the procedure
+
+turnInChar endp
+
 ;------------------------------------------------------------------------------
 
 addMinus proc
@@ -171,7 +225,58 @@ addMinus endp
 
 ;------------------------------ BUBBLE SORT -------------------------------
 
-;...............................
+sortArr proc
+    pop dx  ; save address
+    mov cx, 0  ; initialize counter
+
+    ; Set array of pointers
+    fillArrayOfPoint:
+        mov di, offset quantity
+        shl cx, 1
+        add di, cx
+        shr cx, 1    
+        mov [di], cx  ; move index to quantity address of next value
+        inc cx
+        cmp cx, newInd
+        jnz fillArrayOfPoint
+
+    ; Sort array of pointers
+    mov cx, word ptr newInd
+    dec cx  ; count-1
+
+    outerLoop:
+        push cx  ; preserve outer loop counter
+        lea si, quantity  ; load effective address of quantity array
+
+        innerLoop:
+            mov ax, [si]  ; get index
+            push ax  ; remember index of current value
+            shl ax, 1  ; get index in values
+            add ax, offset values  ; get address of current value
+            mov di, ax
+            mov ax, [di]  ; get current value
+            mov bx, [si + 2]  ; get index of next value
+            push bx  ; remember index of next value
+            shl bx, 1  ; get next index in values
+            add bx, offset values
+            mov di, bx
+            mov bx, [di]  ; get next value
+            cmp ax, bx  ; compare current value with next value
+            pop bx  ; restore next value index
+            pop ax  ; restore current value index
+            jg nextStep  ; if current value is greater than next value, skip swapping
+            xchg bx, ax  ; swap current and next value indices
+            mov [si], ax  ; update current value index in quantity
+            mov [si + 2], bx  ; update next value index in quantity
+        nextStep:
+            add si, 2  ; move to next pair of indices
+            loop innerLoop  ; repeat inner loop until all pairs are compared
+        pop cx  ; restore outer loop counter
+        loop outerLoop  ; repeat outer loop until all elements are sorted
+
+    push dx  ; restore address
+    ret  ; return
+sortArr endp
 
 ;----------------------------------------- ---------------------------------
 end main
