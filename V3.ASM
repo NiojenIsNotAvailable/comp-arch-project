@@ -146,6 +146,30 @@ trnInNum endp
 
 ;------------------------ CALCULATE AVARAGE -----------------------------------
 
+calcAvr proc
+    mov cx, 0               ; Initialize counter
+calcAv:
+    mov si, offset values  ; Point SI to the start of the values array
+    shr cx, 1              ; Multiply counter by 2 to get the offset for the next number
+    add si, cx             ; Move SI to the next number
+
+    mov di, offset quantity ; Point DI to the start of the quantity array
+    add di, cx             ; Move DI to the present quantity of this number
+    shl cx, 1              ; Divide counter by 2 to get the index for the quantity
+
+    mov ax, [si]           ; Move the number to AX
+    mov bx, [di]           ; Move the quantity to BX
+    mov dx, 0              ; Clear DX
+
+    div bx                  ; Divide AX (number) by BX (quantity) to get the average
+    mov [si], ax            ; Put the average into the values array
+    inc cx                  ; Increment counter
+    cmp cx, newInd          ; Compare counter with newInd (total number of elements)
+    jnz calcAv             ; If not at the end, continue calculating averages
+
+ret                         ; Return from the procedure
+
+calcAvr endp
 ;------------------------------------------------------------------------------
 ;----------------------------- WRITE KEYS -------------------------------------
 
