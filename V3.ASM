@@ -149,6 +149,58 @@ trnInNum endp
 ;------------------------------------------------------------------------------
 ;----------------------------- WRITE KEYS -------------------------------------
 
+writeArrays proc
+    mov cx, 0                   ; Initialize loop counter
+makeString:
+    mov ax, 0                   ; Clear AX
+    mov presInd, ax            ; Reset presentation index
+    mov dx, 0                   ; Clear DX
+    push cx                     ; Preserve loop counter
+
+    ; Get the quantity of keys
+    mov di, offset quantity    
+    shl cx, 1                   ; Multiply loop counter by 2
+    add di, cx                  ; Get index of numbers
+
+    ; Get the quantity for the current key
+    mov cx, [di]                
+
+    writeKey:
+        mov si, offset keys     ; Set SI to the start of the keys array
+        mov ax, 0               ; Clear AX
+        mov ax, cx              ; Get the index of the cell
+        shl ax, 4               ; Calculate the real index of the cell
+        add si, ax              ; Move SI to the correct cell
+        add si, presInd        ; Adjust SI based on the presentation index
+
+        ; Write the character to the console
+        mov ah, 02h             ; Function to write character
+        mov bx, dx              ; Save counter to BX
+        mov dl, [si]            ; Load character to DL
+        cmp dl, 0               ; Check if character is null
+
+        jne notEndOfKey         ; If not null, continue writing
+            jmp gotoNewLine     ; If null, go to new line
+        notEndOfKey:
+            int 21h             ; Invoke DOS interrupt to write character
+            mov dx, bx          ; Restore counter from BX
+            inc presInd         ; Increment presentation index
+            inc dx              ; Increment counter
+            cmp dx, 16          ; Check if counter reaches 16 (end of line)
+            jnz writeKey        ; If not, continue writing keys
+    gotoNewLine:
+    
+    ; Move to new line
+    mov ah, 02h                 ; Function to write character
+    mov dl, 0dh                 ; Carriage return character
+    int 21h                     ; Invoke DOS interrupt to write character
+    mov ah, 02h                 ; Function to write character
+    mov dl, 0ah                 ; Line feed character
+    int 21h                     ; Invoke DOS interrupt to write character
+
+ret                             ; Return from the procedure
+
+writeArrays endp
 
 ;------------------------------------------------------------------------------
 
