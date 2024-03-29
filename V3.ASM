@@ -3,10 +3,6 @@
 .stack 100h
 
 .data
-values dw 10000 dup(0)    ; Array to store values
-number db 16 dup(0)       ; Array to store numbers
-numberInd dw 0            ; Index for number array
-quantity dw 3000 dup(0)   ; Array to store quantity of each key
 oneChar db 0              ; Variable to store one character
 presInd dw 0              ; Present index for key operations
 newInd dw 0               ; New index for key operations
@@ -14,27 +10,55 @@ keys db 10000*16 dup(0)   ; Array to store keys
 keyTemp db 16 dup(0)      ; Temporary storage for keys
 keyTempInd dw 0           ; Index for keyTemp array
 isWord db 1               ; Flag to indicate if current input is part of a word
+values dw 10000 dup(0)    ; Array to store values
+number db 16 dup(0)       ; Array to store numbers
+numberInd dw 0            ; Index for number array
+quantity dw 3000 dup(0)   ; Array to store quantity of each key
 
-;---------------------------------------------------------------------------
 
 ;------------------------ CODE SECTION: --------------------------------
+
 .code
 main proc
     mov ax, @data
     mov ds, ax
 
-;---------------------------- STDIN: -----------------------------------
+;---------------------------- STDIN: -----------------------------------+
 
-;................................
+;read stdin and put characters into keyTemp or number
+read_next:
+    mov ah, 3Fh
+    mov bx, 0  ; file handle
+    mov cx, 1   ; 1 byte to read
+    mov dx, offset oneChar   ; read to ds:dx 
+    int 21h   ;  ax = number of bytes read
+    ; do something with [oneChar]
 
-;------------------------------------------------------------------------
+    ;save ax
+    push ax
 
+    call procChar ;process char
+pop ax
+    or ax,ax
+    jnz read_next
+;remove last char in number
+    mov si, offset number
+    dec numberInd
+    add si, numberInd
+    mov [si],0
+    ;turn it into number
+    call trnInNum
+ ;calculate average value
+ call calcAvr   
+ call sortArr
+ call writeArrays
+ 
+ending:
+mov ax, 4C00h
+    int 21h
+main endp
 
-;---------------------------------------------------------------------------
-
-
-
-;------------------------ PROCEDURES SECTION: ---------------------------
+;------------------------ PROCEDURES SECTION: ---------------------------+
 procChar proc
     ;pop dx; save adress to dx
     ;mov saveV, dx
@@ -46,8 +70,6 @@ jne endProc
 mov isWord,1
 call trnInNum
 jmp endProc
-
-
 ;------------------------------ CHECKS: ----------------------------------
 
 ; notCR
@@ -67,7 +89,7 @@ endProc:
 trnInNum PROC
     xor bx,bx
     mov cx,0
-;--------------------- TRANSFORM INPUT INTO NUMBER -----------------------
+;--------------------- TRANSFORM INPUT INTO NUMBER -----------------------+
 
 calcNum:
     mov si, offset number       ; Point SI to the start of the number array
@@ -148,6 +170,10 @@ checkKey proc
     mov cx, 0               ; Initialize loop counter for keys
     mov dx, 0               ; Initialize loop counter for characters
 
+; Check if newInd (number of keys) is 0
+    cmp newInd, 0
+    jnz findKey             ; If not 0, jump to findKey
+    jmp addNewKey           ; If 0, jump to addNewKey
 
 findKey:
     mov dx, 0               ; Reset character counter to 0
