@@ -71,24 +71,58 @@ mov isWord,1
 call trnInNum
 jmp endProc
 ;------------------------------ CHECKS: ----------------------------------
+notCR:
+    cmp oneChar, 0Ah       ; Compare the character with newline (LF)
+    jnz notLF              ; Jump if it's not LF
+    ; Change isWord to 1
+    cmp isWord, 0
+    jnz endProc            ; Jump to end if isWord is not 0
+    mov isWord, 1          ; Set isWord to 1
+    call trnInNum          ; Call trnInNum procedure
+    jmp endProc            ; Jump to the end of the procedure
 
-; notCR
-; notLF
-; notSpace
-; isWord
+notLF:
+    cmp oneChar, 20h       ; Compare the character with space
+    jnz notSpace           ; Jump if it's not a space
+    ; Change isWord to 0
+    mov isWord, 0          ; Set isWord to 0
+    ; Check if key exists
+    call checkKey          ; Call checkKey procedure
+    jmp endProc            ; Jump to the end of the procedure
 
+notSpace:
+    cmp isWord, 0          ; Compare isWord with 0
+    jnz itsWord            ; Jump to itsWord if isWord is not 0
+    ; Save char to values
+    mov si, offset number ; Move offset of number array to SI
+    mov bx, numberInd     ; Move numberInd to BX
+    add si, bx            ; Add BX to SI
+    mov al, oneChar      ; Move the character to AL
+    mov [si], al          ; Store the character in the number array
+    inc numberInd         ; Increment numberInd
+    jmp endProc           ; Jump to the end of the procedure
+
+itsWord:
+    mov si, offset keyTemp  ; Move offset of keyTemp array to SI
+    mov bx, keyTempInd      ; Move keyTempInd to BX
+    add si, bx              ; Add BX to SI
+    mov al, oneChar         ; Move the character to AL
+    mov [si], al            ; Store the character in the keyTemp array
+    inc keyTempInd          ; Increment keyTempInd
 
 endProc:
-    ret  ; End of the procChar procedure
+    ret                      ; Return from the procedure
 
-;--------------------------------------------------------------------------
 
+    ret
  procChar endp   
 
 
 trnInNum PROC
     xor bx,bx
     mov cx,0
+
+
 ;--------------------- TRANSFORM INPUT INTO NUMBER -----------------------+
 
 calcNum:
@@ -274,17 +308,16 @@ checkKey endp
 
 
 ;------------------------ CALCULATE AVARAGE -----------------------------------
-
 calcAvr proc
     mov cx, 0               ; Initialize counter
 calcAv:
     mov si, offset values  ; Point SI to the start of the values array
-    shr cx, 1              ; Multiply counter by 2 to get the offset for the next number
+    shl cx, 1              ; Multiply counter by 2 to get the offset for the next number
     add si, cx             ; Move SI to the next number
 
     mov di, offset quantity ; Point DI to the start of the quantity array
     add di, cx             ; Move DI to the present quantity of this number
-    shl cx, 1              ; Divide counter by 2 to get the index for the quantity
+    shr cx, 1              ; Divide counter by 2 to get the index for the quantity
 
     mov ax, [si]           ; Move the number to AX
     mov bx, [di]           ; Move the quantity to BX
@@ -299,7 +332,7 @@ calcAv:
 ret                         ; Return from the procedure
 
 calcAvr endp
-;------------------------------------------------------------------------------
+
 ;----------------------------- WRITE KEYS -------------------------------------
 
 writeArrays proc
