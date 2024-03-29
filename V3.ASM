@@ -1,4 +1,5 @@
 ;------------------------ DATA SECTION: --------------------------------
+
 .model small
 .stack 100h
 
@@ -25,40 +26,43 @@ main proc
 
 ;---------------------------- STDIN: -----------------------------------+
 
-;read stdin and put characters into keyTemp or number
+
+; Read stdin and put characters into keyTemp or number
 read_next:
-    mov ah, 3Fh
-    mov bx, 0  ; file handle
-    mov cx, 1   ; 1 byte to read
-    mov dx, offset oneChar   ; read to ds:dx 
-    int 21h   ;  ax = number of bytes read
+    mov ah, 3Fh          ; DOS function to read from file or device
+    mov bx, 0            ; File handle (stdin)
+    mov cx, 1            ; 1 byte to read
+    mov dx, offset oneChar ; Read into ds:dx 
+    int 21h              ; AH = number of bytes read
     ; do something with [oneChar]
 
-    ;save ax
+    ; Save AX
     push ax
 
-    call procChar ;process char
-pop ax
-    or ax,ax
-    jnz read_next
-;remove last char in number
+    call procChar        ; Process the character
+    pop ax               ; Restore AX
+    or ax, ax            ; Check if EOF
+    jnz read_next        ; If not EOF, continue reading
+    ; Remove last char in number
     mov si, offset number
     dec numberInd
     add si, numberInd
-    mov [si],0
-    ;turn it into number
+    mov [si], 0
+    ; Turn it into a number
     call trnInNum
- ;calculate average value
- call calcAvr   
- call sortArr
- call writeArrays
+    ; Calculate average value
+    call calcAvr   
+    call sortArr
+    call writeArrays
  
 ending:
-mov ax, 4C00h
-    int 21h
+    mov ax, 4C00h        ; DOS function to terminate program
+    int 21h              ; Terminate program
 main endp
 
+
 ;------------------------ PROCEDURES SECTION: ---------------------------+
+
 procChar proc
     ;pop dx; save adress to dx
     ;mov saveV, dx
@@ -68,51 +72,49 @@ jnz notCR
 cmp isWord,0
 jne endProc
 mov isWord,1
-call trnInNum
-jmp endProc
+ call trnInNum
+    jmp endProc
 ;------------------------------ CHECKS: ----------------------------------
+
 notCR:
-    cmp oneChar, 0Ah       ; Compare the character with newline (LF)
-    jnz notLF              ; Jump if it's not LF
-    ; Change isWord to 1
-    cmp isWord, 0
-    jnz endProc            ; Jump to end if isWord is not 0
-    mov isWord, 1          ; Set isWord to 1
-    call trnInNum          ; Call trnInNum procedure
-    jmp endProc            ; Jump to the end of the procedure
+cmp oneChar,0Ah
+jnz notLF
+;change isWord to 1
 
+cmp isWord,0
+jnz endProc
+mov isWord,1
+ call trnInNum
+    jmp endProc
 notLF:
-    cmp oneChar, 20h       ; Compare the character with space
-    jnz notSpace           ; Jump if it's not a space
-    ; Change isWord to 0
-    mov isWord, 0          ; Set isWord to 0
-    ; Check if key exists
-    call checkKey          ; Call checkKey procedure
-    jmp endProc            ; Jump to the end of the procedure
-
+cmp oneChar,20h
+jnz notSpace
+;chance isWord to 0
+mov isWord,0
+ ;check if key exists
+    call checkKey
+    jmp endProc
 notSpace:
-    cmp isWord, 0          ; Compare isWord with 0
-    jnz itsWord            ; Jump to itsWord if isWord is not 0
-    ; Save char to values
-    mov si, offset number ; Move offset of number array to SI
-    mov bx, numberInd     ; Move numberInd to BX
-    add si, bx            ; Add BX to SI
-    mov al, oneChar      ; Move the character to AL
-    mov [si], al          ; Store the character in the number array
-    inc numberInd         ; Increment numberInd
-    jmp endProc           ; Jump to the end of the procedure
-
+    cmp isWord, 0
+    jnz itsWord
+       ;save char to values
+       mov si, offset number
+        mov bx, numberInd
+        add si, bx
+        mov al, oneChar
+        mov [si], al
+        inc numberInd
+          jmp endProc
 itsWord:
-    mov si, offset keyTemp  ; Move offset of keyTemp array to SI
-    mov bx, keyTempInd      ; Move keyTempInd to BX
-    add si, bx              ; Add BX to SI
-    mov al, oneChar         ; Move the character to AL
-    mov [si], al            ; Store the character in the keyTemp array
-    inc keyTempInd          ; Increment keyTempInd
+        mov si, offset keyTemp
+        mov bx, keyTempInd 
+        add si, bx
+        mov al, oneChar
+        mov [si], al
+        inc keyTempInd 
+      
 
 endProc:
-    ret                      ; Return from the procedure
-
 
     ret
  procChar endp   
@@ -192,26 +194,24 @@ trnInNum endp
 
 ;-----------------------------------------------------------------------------------
 
-
 ;------------------------------ CHECK KEY PRESENCE -----------------------------
 ;This part of the code is responsible for checking the presence of a key in the keys 
 ;array. If the key is present, it increments the quantity for that key. If the key 
 ;is not present, it adds the new key to the keys array and sets its quantity to 1.
+
 
 checkKey proc
     mov ax, 0               ; Clear AX (accumulator)
     mov bx, 0               ; Initialize presence of key flag to 0
     mov cx, 0               ; Initialize loop counter for keys
     mov dx, 0               ; Initialize loop counter for characters
-
-; Check if newInd (number of keys) is 0
+    ;check if keyInd is 0
     cmp newInd, 0
     jnz findKey             ; If not 0, jump to findKey
     jmp addNewKey           ; If 0, jump to addNewKey
-
-findKey:
-    mov dx, 0               ; Reset character counter to 0
-    checkPresKey:
+    findKey:
+    mov dx,0                ; Reset character counter to 0
+          checkPresKey:
         mov si, offset keys ; Point SI to the start of the keys array
         shl cx, 4           ; Multiply key index by 16 to get the offset
         add si, cx          ; Move SI to the current key
@@ -229,6 +229,7 @@ findKey:
         mov bx, 1           ; Set presence flag to 1 (char present in current key)
         jmp contComp        ; Jump to contComp
 
+        
     notEqualChar:
         mov bx, 0           ; Set presence flag to 0 (char not present in current key)
         mov dx, 15          ; Move to the next key
@@ -237,7 +238,7 @@ findKey:
         cmp dx, 16          ; Compare with the end of key (16 characters)
         jnz checkPresKey    ; If not end, continue checking characters
 
-    ; Check if key is present
+   ; Check if key is present
     cmp bx, 0
     jnz keyPresent          ; If present, jump to keyPresent
 
@@ -248,7 +249,7 @@ findKey:
     ; New key
     ; Add new key to the keys array
     mov cx, 0               ; Reset counter
-addNewKey:
+    addNewKey:
     mov si, offset keyTemp ; Point SI to the start of keyTemp array
     add si, cx             ; Move SI to the current character
     mov di, offset keys    ; Point DI to the start of keys array
@@ -304,10 +305,8 @@ fillZeroskey:
 checkKey endp
 
 
-------------------------------------------------------------------------------
-
-
 ;------------------------ CALCULATE AVARAGE -----------------------------------
+
 calcAvr proc
     mov cx, 0               ; Initialize counter
 calcAv:
@@ -334,6 +333,7 @@ ret                         ; Return from the procedure
 calcAvr endp
 
 ;----------------------------- WRITE KEYS -------------------------------------
+
 
 writeArrays proc
     mov cx, 0                   ; Initialize loop counter
@@ -384,6 +384,12 @@ makeString:
     mov dl, 0ah                 ; Line feed character
     int 21h                     ; Invoke DOS interrupt to write character
 
+    ; Check if it's not the last key-average
+    pop cx                      ; Restore loop counter
+    inc cx                      ; Increment loop counter
+    cmp cx, newInd              ; Compare loop counter with newInd (total number of keys)
+    jnz makeString              ; If not the last key-average, continue
+
 ret                             ; Return from the procedure
 
 writeArrays endp
@@ -391,7 +397,6 @@ writeArrays endp
 ;------------------------------------------------------------------------------
 
 ;------------------------ CONVERT NUMBER TO CHARACTERS ------------------------
-
 
 turnInChar proc
     pop dx                      ; Restore DX
@@ -445,7 +450,6 @@ reverse:
 ret                             ; Return from the procedure
 
 turnInChar endp
-
 ;------------------------------------------------------------------------------
 
 addMinus proc
@@ -515,7 +519,5 @@ sortArr proc
     push dx  ; restore address
     ret  ; return
 sortArr endp
-
-;----------------------------------------- ---------------------------------
-end main
 ;---------------------------------------------------------------------------
+end main
