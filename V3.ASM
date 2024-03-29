@@ -141,6 +141,109 @@ trnInNum endp
 ;This part of the code is responsible for checking the presence of a key in the keys 
 ;array. If the key is present, it increments the quantity for that key. If the key 
 ;is not present, it adds the new key to the keys array and sets its quantity to 1.
+
+checkKey proc
+    mov ax, 0               ; Clear AX (accumulator)
+    mov bx, 0               ; Initialize presence of key flag to 0
+    mov cx, 0               ; Initialize loop counter for keys
+    mov dx, 0               ; Initialize loop counter for characters
+
+
+findKey:
+    mov dx, 0               ; Reset character counter to 0
+    checkPresKey:
+        mov si, offset keys ; Point SI to the start of the keys array
+        shl cx, 4           ; Multiply key index by 16 to get the offset
+        add si, cx          ; Move SI to the current key
+
+        shr cx, 4           ; Restore original value of key index
+        add si, dx          ; Move SI to the next character offset
+
+        mov al, [si]        ; Load the next character from keys array
+        mov di, offset keyTemp ; Point DI to the start of keyTemp array
+        add di, dx          ; Move DI to the next character offset in keyTemp
+        mov ah, [di]        ; Load the next character from keyTemp
+
+        cmp al, ah          ; Compare characters from keys array and keyTemp
+        jne notEqualChar    ; If not equal, jump to notEqualChar
+        mov bx, 1           ; Set presence flag to 1 (char present in current key)
+        jmp contComp        ; Jump to contComp
+
+    notEqualChar:
+        mov bx, 0           ; Set presence flag to 0 (char not present in current key)
+        mov dx, 15          ; Move to the next key
+    contComp:
+        inc dx              ; Move to the next character
+        cmp dx, 16          ; Compare with the end of key (16 characters)
+        jnz checkPresKey    ; If not end, continue checking characters
+
+    ; Check if key is present
+    cmp bx, 0
+    jnz keyPresent          ; If present, jump to keyPresent
+
+    inc cx                  ; Increment key counter
+    cmp cx, newInd          ; Compare with the total number of keys
+    jne findKey             ; If not end, continue finding keys
+
+    ; New key
+    ; Add new key to the keys array
+    mov cx, 0               ; Reset counter
+addNewKey:
+    mov si, offset keyTemp ; Point SI to the start of keyTemp array
+    add si, cx             ; Move SI to the current character
+    mov di, offset keys    ; Point DI to the start of keys array
+    mov ax, newInd         ; Get the number of keys
+    shl ax, 4              ; Multiply by 16 to get the offset
+    add di, cx             ; Move DI to the current character
+    add di, ax             ; Add offset to DI
+    mov al, [si]           ; Load character from keyTemp
+    mov [di], al           ; Store character into keys array
+    inc cx                 ; Increment counter
+    cmp cx, 16             ; Compare with the length of the key
+    jnz addNewKey          ; If not end, continue adding characters to keys array
+
+    mov cx, newInd         ; Get the number of keys
+    mov presInd, cx        ; Set present index to the number of keys
+    inc newInd             ; Increment the number of keys
+
+    ; Set quantity to 1 for the new key
+    mov si, offset quantity ; Point SI to the start of quantity array
+    mov cx, presInd        ; Get the present index
+    shl cx, 1              ; Multiply by 2 to get the offset
+    add si, cx             ; Move SI to the current quantity
+    mov ax, 1              ; Set quantity to 1
+    mov [si], ax           ; Store quantity into quantity array
+    jmp endOfCheck         ; End of checking
+
+keyPresent:
+    ; Key index in CX
+    ; Add 1 to the quantity for this key
+    mov presInd, cx        ; Set present index to the key index
+    mov si, offset quantity ; Point SI to the start of quantity array
+    mov cx, presInd        ; Get the present index
+    shl cx, 1              ; Multiply by 2 to get the offset
+    add si, cx             ; Move SI to the current quantity
+    mov ax, [si]           ; Get the current quantity
+    inc ax                 ; Increment quantity by 1
+    mov [si], ax           ; Store updated quantity
+
+endOfCheck:
+    ; Fill temp key by 0
+    mov keyTempInd, 0      ; Reset keyTemp index
+    mov cx, 0              ; Reset counter
+fillZeroskey:
+    mov si, offset keyTemp ; Point SI to the start of keyTemp array
+    add si, cx             ; Move SI to the current character
+    mov [si], 0            ; Fill character with 0
+    inc cx                 ; Increment counter
+    cmp cx, 15             ; Compare with the length of the key
+    jnz fillZeroskey       ; If not end, continue filling keyTemp array with zeros
+
+    ret                     ; Return from the procedure
+
+checkKey endp
+
+
 ------------------------------------------------------------------------------
 
 
