@@ -75,6 +75,9 @@ mov isWord,1
  call trnInNum
     jmp endProc
 ;------------------------------ CHECKS: ----------------------------------
+; The procChar procedure handles character processing logic, while the 
+; trnInNum procedure specifically deals with converting character sequences 
+; into integer values.
 
 notCR:
 cmp oneChar,0Ah
@@ -126,6 +129,9 @@ trnInNum PROC
 
 
 ;--------------------- TRANSFORM INPUT INTO NUMBER -----------------------+
+; The calcNum procedure is responsible for transforming a sequence of ASCII 
+; characters representing a number into its integer equivalent and storing 
+; it in the values array. 
 
 calcNum:
     mov si, offset number       ; Point SI to the start of the number array
@@ -192,7 +198,6 @@ afterCalc:
 
 trnInNum endp
 
-;-----------------------------------------------------------------------------------
 
 ;------------------------------ CHECK KEY PRESENCE -----------------------------
 ;This part of the code is responsible for checking the presence of a key in the keys 
@@ -306,6 +311,9 @@ checkKey endp
 
 
 ;------------------------ CALCULATE AVARAGE -----------------------------------
+; Calculates the average value for each key based on the quantities stored in 
+; the quantity array. It divides the sum of values for each key by the 
+; corresponding quantity.
 
 calcAvr proc
     mov cx, 0               ; Initialize counter
@@ -333,7 +341,9 @@ ret                         ; Return from the procedure
 calcAvr endp
 
 ;----------------------------- WRITE KEYS -------------------------------------
-
+; Writes the sorted keys and their corresponding average values to the standard 
+; output. It iterates through the sorted keys and fetches their corresponding 
+; average values from the values array, then prints them to the console.
 
 writeArrays proc
     mov cx, 0                   ; Initialize loop counter
@@ -394,10 +404,10 @@ ret                             ; Return from the procedure
 
 writeArrays endp
 
-;------------------------------------------------------------------------------
 
 ;------------------------ CONVERT NUMBER TO CHARACTERS ------------------------
-
+; The turnInChar procedure appears to convert a number stored in the values array 
+; into a string of characters representing that number.
 turnInChar proc
     pop dx                      ; Restore DX
     pop bx                      ; Get index
@@ -466,7 +476,11 @@ ret
 addMinus endp
 
 ;------------------------------ BUBBLE SORT -------------------------------
-
+; Implements the bubble sort algorithm to sort the keys based on their 
+; average values. It sorts the indices of the values array according to 
+; the average values stored in the values array. After sorting, the 
+; indices are rearranged such that the keys with higher average values 
+; appear first.
 sortArr proc
     pop dx  ; save address
     mov cx, 0  ; initialize counter
